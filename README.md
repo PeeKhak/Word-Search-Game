@@ -13,6 +13,7 @@
             margin: 0;
             padding: 20px;
             user-select: none;
+            touch-action: manipulation; /* Improve touch responsiveness */
         }
         #game-container {
             display: flex;
@@ -27,14 +28,15 @@
         #grid-container {
             position: relative;
             overflow: auto;
-            max-width: calc(100vw - 40px); /* Fit viewport width, accounting for padding */
-            max-height: 60vh; /* Reduced to minimize vertical scrolling */
+            max-width: calc(100vw - 40px); /* Fit viewport width */
+            max-height: 60vh; /* Minimize vertical scrolling */
             margin-bottom: 20px;
             background: linear-gradient(145deg, #f0f0f0, #e0e0e0);
             border-radius: 12px;
             padding: 10px;
             display: flex;
             justify-content: center;
+            touch-action: none; /* Prevent default touch scrolling in grid */
         }
         #grid {
             display: grid;
@@ -237,7 +239,8 @@
             <p>Welcome to Word Search! Find the hidden words in the grid:</p>
             <ul>
                 <li>Choose a mode: Easy (8x8, 10 words), Normal (12x12, 18 words), or Hard (20x20, 30 words) using the buttons.</li>
-                <li>Click and drag to select letters in the grid (horizontally, vertically, or diagonally).</li>
+                <li>On desktop, click and drag to select letters in the grid (horizontally, vertically, or diagonally).</li>
+                <li>On mobile, touch and hold a letter, then drag to select words.</li>
                 <li>Match words from the list below the grid (forward or backward).</li>
                 <li>Found words are highlighted with a green gradient and struck through in the list.</li>
                 <li>A colored line (blue, purple, etc.) shows your selection; a vibrant line (green, red, etc.) highlights found words with a glow effect.</li>
@@ -284,7 +287,6 @@
                 'WRESTLING', 'ROWING', 'SAILING', 'CLIMBING', 'SKATING', 'GYMNAST', 'SQUASH', 'BADMINTON', 'POLO', 'KAYAK'
             ]
         };
-        // Expanded to 150 words to support Hard mode (30 words). Expand to 500 by adding ~70 words per category.
         let grid = [];
         let selectedCells = [];
         let foundWords = [];
@@ -340,7 +342,7 @@
                 );
             }
             ctx.stroke();
-            ctx.shadowBlur = 0; // Reset shadow
+            ctx.shadowBlur = 0;
         }
 
         // Confetti animation
@@ -387,7 +389,7 @@
         function getRandomWords() {
             const pool = Object.values(wordPool).flat();
             const shuffled = pool.sort(() => 0.5 - Math.random());
-            const numWords = modeSettings[currentMode].wordCount; // 10 for Easy, 18 for Normal, 30 for Hard
+            const numWords = modeSettings[currentMode].wordCount;
             return shuffled.slice(0, numWords);
         }
 
@@ -400,7 +402,6 @@
                     placedWords.push(word);
                 }
             }
-            // Fill remaining cells with random letters
             for (let i = 0; i < GRID_SIZE; i++) {
                 for (let j = 0; j < GRID_SIZE; j++) {
                     if (!grid[i][j]) {
@@ -408,7 +409,6 @@
                     }
                 }
             }
-            // If not all words were placed, try again
             if (placedWords.length < words.length) {
                 generateGrid();
             }
@@ -463,6 +463,7 @@
                     cell.dataset.col = j;
                     cell.style.animationDelay = `${(i * GRID_SIZE + j) * 0.02}s`;
                     cell.addEventListener('mousedown', startSelection);
+                    cell.addEventListener('touchstart', handleTouchStart);
                     gridDiv.appendChild(cell);
                 }
             }
@@ -483,12 +484,48 @@
         }
 
         let isSelecting = false;
+        let touchTimer = null;
+        const HOLD_DELAY = 100; // Milliseconds to detect a hold
+
         function startSelection(e) {
             isSelecting = true;
             selectedCells = [];
             toggleCellSelection(e.target);
             document.addEventListener('mousemove', handleMouseMove);
             document.addEventListener('mouseup', endSelection);
+        }
+
+        function handleTouchStart(e) {
+            e.preventDefault(); // Prevent default touch scrolling
+            touchTimer = setTimeout(() => {
+                isSelecting = true;
+                selectedCells = [];
+                toggleCellSelection(e.target);
+                document.addEventListener('touchmove', handleTouchMove, { passive: false });
+                document.addEventListener('touchend', endSelection);
+            }, HOLD_DELAY);
+        }
+
+        function handleTouchMove(e) {
+            if (!isSelecting) return;
+            e.preventDefault(); // Prevent default touch scrolling
+            const touch = e.touches[0];
+            const element = document.elementFromPoint(touch.clientX, touch.clientY);
+            if (element && element.classList.contains('cell')) {
+                const lastCell = selectedCells[selectedCells.length - 1];
+                const currentCell = element;
+                const lastRow = parseInt(lastCell.dataset.row);
+                const lastCol = parseInt(lastCell.dataset.col);
+                const currRow = parseInt(currentCell.dataset.row);
+                const currCol = parseInt(currentCell.dataset.col);
+                const dr = currRow - lastRow;
+                const dc = currCol - lastCol;
+                const isValidDirection = Math.abs(dr) <= 1 && Math.abs(dc) <= 1 && (dr !== 0 || dc !== 0);
+                if (isValidDirection && selectedCells.length < 10) {
+                    toggleCellSelection(currentCell);
+                    drawLine(selectedCells, 'select');
+                }
+            }
         }
 
         function handleMouseMove(e) {
@@ -511,9 +548,15 @@
         }
 
         function endSelection() {
+            if (touchTimer) {
+                clearTimeout(touchTimer);
+                touchTimer = null;
+            }
             isSelecting = false;
             document.removeEventListener('mousemove', handleMouseMove);
             document.removeEventListener('mouseup', endSelection);
+            document.removeEventListener('touchmove', handleTouchMove);
+            document.removeEventListener('touchend', endSelection);
             checkSelectedWord();
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             selectedCells.forEach(cell => cell.classList.remove('selected'));
