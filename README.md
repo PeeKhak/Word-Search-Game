@@ -27,12 +27,14 @@
         #grid-container {
             position: relative;
             overflow: auto;
-            max-width: 100%;
-            max-height: 70vh;
+            max-width: calc(100vw - 40px); /* Fit viewport width, accounting for padding */
+            max-height: 60vh; /* Reduced to minimize vertical scrolling */
             margin-bottom: 20px;
             background: linear-gradient(145deg, #f0f0f0, #e0e0e0);
             border-radius: 12px;
             padding: 10px;
+            display: flex;
+            justify-content: center;
         }
         #grid {
             display: grid;
@@ -251,9 +253,9 @@
     <script>
         let GRID_SIZE = 8; // Default to Easy
         const modeSettings = {
-            easy: { size: 8, cellSize: 40, name: 'Easy', wordCount: 10 },
-            normal: { size: 12, cellSize: 35, name: 'Normal', wordCount: 18 },
-            hard: { size: 20, cellSize: 30, name: 'Hard', wordCount: 30 }
+            easy: { size: 8, cellSize: 38, name: 'Easy', wordCount: 10 },
+            normal: { size: 12, cellSize: 32, name: 'Normal', wordCount: 18 },
+            hard: { size: 20, cellSize: 28, name: 'Hard', wordCount: 30 }
         };
         const wordPool = {
             animals: [
