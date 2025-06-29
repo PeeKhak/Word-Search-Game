@@ -1,4 +1,5 @@
 # Word-Search-Game (Beta)
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -243,7 +244,7 @@
                 <li>Hear a high-pitched beep for correct words, low-pitched for incorrect.</li>
                 <li>Win by finding all words, triggering a confetti burst and pulsing animation!</li>
                 <li>Click "New Game" to choose a mode and start with new words.</li>
-                <li>Click "How to Play" anytime for these instructions.</li>
+                <li>Click "How to Play" to view these instructions.</li>
             </ul>
         </div>
         <button id="close-info">Close</button>
@@ -283,7 +284,7 @@
                 'WRESTLING', 'ROWING', 'SAILING', 'CLIMBING', 'SKATING', 'GYMNAST', 'SQUASH', 'BADMINTON', 'POLO', 'KAYAK'
             ]
         };
-        // Expanded to 150 words to support Hard mode (30 words). Expand to 500 by adding more per category.
+        // Expanded to 150 words to support Hard mode (30 words). Expand to 500 by adding ~70 words per category.
         let grid = [];
         let selectedCells = [];
         let foundWords = [];
@@ -598,9 +599,8 @@
             document.getElementById('info-modal').style.display = 'none';
         });
 
-        // Show mode selection and info modal on initial load
+        // Show mode selection on initial load
         document.getElementById('mode-selection').style.display = 'flex';
-        showInfoModal();
     </script>
 </body>
 </html>
